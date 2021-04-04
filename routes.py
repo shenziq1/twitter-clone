@@ -2,18 +2,19 @@ from flask import Flask, request, jsonify, render_template, redirect, make_respo
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from flask_restful import Resource
 from models import User
+from db import db
 
 class IndexApi(Resource):
     def get(self):
         if current_user.is_authenticated:
-            return "Hello, " + current_user.get_username() + " !"
+            return "Hello, " + current_user.get_username() + "!"
         else:
             return "Hello, please register or login!"
 
 class UsersApi(Resource):
     def get(self):
         users = User.query.all()
-        return jsonify([{"username": i.username, "password_hash": i.password_hash, "id": i.id} for i in users])
+        return jsonify([{"username": user.username, "password_hash": user.password_hash, "id": user.id} for user in users])
 
 class RegisterApi(Resource):
 
@@ -24,27 +25,24 @@ class RegisterApi(Resource):
         return make_response(render_template('register.html'), 200, headers)
 
     def post(self):
-        try:
-            username = request.form['username']
-            password = request.form['password']
-            password2 = request.form['password2']
+        username = request.form['username']
+        password = request.form['password']
+        password2 = request.form['password2']
 
-            if not (username and password and password2):
-                return('Fields required.')
+        if not (username and password and password2):
+            return {'error': 'Fields are required to be filled.'}, 400
 
-            else:
-                if password != password2:
-                    return('Password mismatch!')
+        else:
+            if password != password2:
+                return {'error': 'Password mismatch!'}, 401
 
-                if User.query.filter_by(username=username).first():
-                    return('User exists, try another username!')
+            if User.query.filter_by(username=username).first():
+                return {'error': 'User exists, try another username!'}, 409
 
-                user = User(username=username, password=password)
-                db.session.add(user)
-                db.session.commit()
-                return redirect('/login')
-        except Exception as e:
-            return jsonify({"error": e})
+            user = User(username=username, password=password)
+            db.session.add(user)
+            db.session.commit()
+            return redirect('/login')
 
 
 class LoginApi(Resource):
@@ -56,10 +54,21 @@ class LoginApi(Resource):
 
     def post(self):
         username = request.form['username']
-        user = User.query.filter_by(username = username).first()
-        if user is not None and user.check_password(request.form['password']):
-            login_user(user)
-            return redirect('/')
+        password = request.form['password']
+
+        if not (username and password):
+            return {'error': 'Fields are required to be filled.'}, 400
+
+        else:
+            user = User.query.filter_by(username = username).first()
+            if user is not None:
+                if user.check_password(password):
+                    login_user(user)
+                    return redirect('/')
+                else:
+                    return {'error': 'Incorrect password!'}, 401
+            else:
+                return {'error':'Cannot find user with username ' + username}, 404
 
 class LogoutApi(Resource):
     def get(self):
