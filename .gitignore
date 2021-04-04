@@ -1,2 +1,5 @@
 
 .DS_Store
+__pycache__/routes.cpython-38.pyc
+__pycache__/models.cpython-38.pyc
+__pycache__/db.cpython-38.pyc
