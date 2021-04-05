@@ -4,3 +4,5 @@ __pycache__/routes.cpython-38.pyc
 __pycache__/models.cpython-38.pyc
 __pycache__/db.cpython-38.pyc
 __pycache__/errors.cpython-38.pyc
+__pycache__/unit_test.cpython-38-pytest-6.2.3.pyc
+__pycache__/app.cpython-38.pyc
