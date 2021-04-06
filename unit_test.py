@@ -112,33 +112,34 @@ class TestLogin:
 
 class TestChat:
     def test_setup_chat(app, client):
-        payload1 = {
+        user_a = {
             "username": "a",
             "password": "1",
             "password2": "1"
         }
-        client.post('/register', data=payload1)
+        client.post('/register', data=user_a)
 
-        payload2 = {
+        user_b = {
             "username": "b",
             "password": "2",
             "password2": "2"
         }
-        client.post('/register', data=payload2)
+        client.post('/register', data=user_b)
 
-        payload3 = {
-            "username": "b",
-            "password": "2"
+    def test_chat_a(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
         }
-        client.post('/login', data=payload3)
+        client.post('/login', data=login)
 
-    def test_chat(app, client):
-        payload = {
-            "_to": "a",
-            "content": "hello, a"
+        chat = {
+            "_to": "b",
+            "content": "hello, b"
         }
-        response = client.post('/chat', data=payload)
+        response = client.post('/chat', data=chat)
         assert response.status_code == 200
+        assert {'success': 'Message has been sent!'} == json.loads(response.get_data(as_text=True))
 
     def test_invalid_user_chat(app, client):
         payload = {
@@ -147,6 +148,7 @@ class TestChat:
         }
         response = client.post('/chat', data=payload)
         assert response.status_code == 404
+        assert {'error':'Cannot find user with username ' + 'c'} == json.loads(response.get_data(as_text=True))
 
     def test_missing_field_chat(app, client):
         payload = {
@@ -155,3 +157,60 @@ class TestChat:
         }
         response = client.post('/chat', data=payload)
         assert response.status_code == 400
+        assert {'error': 'Fields are required to be filled.'} == json.loads(response.get_data(as_text=True))
+
+        client.get('/logout')
+
+class TestSentHistory:
+    def test_sent_history_a(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
+        }
+        client.post('/login', data=login)
+
+        response = client.get('/history/sent')
+        assert response.status_code == 200
+        assert [{'_to': 'b', 'message': 'hello, b'}] == json.loads(response.get_data(as_text=True))
+
+        client.get('/logout')
+
+    def test_sent_empty_history_b(app, client):
+        login = {
+            "username": "b",
+            "password": "2"
+        }
+        client.post('/login', data=login)
+
+        response = client.get('/history/sent')
+        assert response.status_code == 200
+        assert [] == json.loads(response.get_data(as_text=True))
+
+        client.get('/logout')
+
+class TestReceivedHistory:
+    def test_received_empty_history_a(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
+        }
+        client.post('/login', data=login)
+
+        response = client.get('/history/received')
+        assert response.status_code == 200
+        assert [] == json.loads(response.get_data(as_text=True))
+
+        client.get('/logout')
+
+    def test_received_history_b(app, client):
+        login = {
+            "username": "b",
+            "password": "2"
+        }
+        client.post('/login', data=login)
+
+        response = client.get('/history/received')
+        assert response.status_code == 200
+        assert [{'_from': 'a', 'message': 'hello, b'}] == json.loads(response.get_data(as_text=True))
+
+        client.get('/logout')

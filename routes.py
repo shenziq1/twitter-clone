@@ -98,15 +98,11 @@ class Chat(Resource):
             return {'error': 'Fields are required to be filled.'}, 400
 
 
-
-
 class SentHistory(Resource):
     @login_required
     def get(self):
         _from = current_user.get_username()
         messages = Message.query.filter_by(_from=_from)
-        if message is None:
-            return {'alert':'You have not sent any message yet!'}, 204
         return jsonify([{'_to': m.get_to(), 'message': m.get_content()} for m in messages])
 
 class ReceivedHistory(Resource):
@@ -114,8 +110,6 @@ class ReceivedHistory(Resource):
     def get(self):
         _to = current_user.get_username()
         messages = Message.query.filter_by(_to=_to)
-        if message is None:
-            return {'alert':'You have not received any message yet!'}, 204
         return jsonify([{'_from': m.get_from(), 'message': m.get_content()} for m in messages])
 
 def initialize_routes(api):
