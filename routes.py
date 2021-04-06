@@ -1,22 +1,22 @@
 from flask import Flask, request, jsonify, render_template, redirect, make_response
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from flask_restful import Resource
-from models import User
+from models import User, Message
 from db import db
 
-class IndexApi(Resource):
+class Index(Resource):
     def get(self):
         if current_user.is_authenticated:
             return "Hello, " + current_user.get_username() + "!"
         else:
             return "Hello, please register or login!"
 
-class UsersApi(Resource):
+class Users(Resource):
     def get(self):
         users = User.query.all()
         return jsonify([{"username": user.username, "password_hash": user.password_hash, "id": user.id} for user in users])
 
-class RegisterApi(Resource):
+class Register(Resource):
 
     def get(self):
         if current_user.is_authenticated:
@@ -45,7 +45,7 @@ class RegisterApi(Resource):
             return redirect('/login')
 
 
-class LoginApi(Resource):
+class Login(Resource):
     def get(self):
         if current_user.is_authenticated:
             return redirect('/')
@@ -70,14 +70,50 @@ class LoginApi(Resource):
             else:
                 return {'error':'Cannot find user with username ' + username}, 404
 
-class LogoutApi(Resource):
+class Logout(Resource):
     def get(self):
         logout_user()
         return redirect('/')
 
+class Chat(Resource):
+    @login_required
+    def get(self):
+        headers = {'Content-Type': 'text/html'}
+        return make_response(render_template('chat.html'), 200, headers)
+
+    @login_required
+    def post(self):
+        _from = current_user.get_username()
+        _to = request.form['_to']
+        content = request.form['content']
+        channel = _from + '-' + _to
+
+        message = Message(_from=_from, _to=_to, content=content, channel=channel)
+        db.session.add(message)
+        db.session.commit()
+
+        return {'success': 'message has been sent!'}, 200
+
+class SentHistory(Resource):
+    @login_required
+    def get(self):
+        _from = current_user.get_username()
+        messages = Message.query.filter_by(_from=_from)
+        return jsonify([{'_to': m.get_to(), 'message': m.get_content()} for m in messages])
+
+class ReceivedHistory(Resource):
+    @login_required
+    def get(self):
+        _to = current_user.get_username()
+        messages = Message.query.filter_by(_to=_to)
+        return jsonify([{'_from': m.get_from(), 'message': m.get_content()} for m in messages])
+
 def initialize_routes(api):
-    api.add_resource(UsersApi, '/users')
-    api.add_resource(IndexApi, '/')
-    api.add_resource(RegisterApi, '/register')
-    api.add_resource(LoginApi, '/login')
-    api.add_resource(LogoutApi, '/logout')
+    api.add_resource(Users, '/users')
+    api.add_resource(Index, '/')
+    api.add_resource(Register, '/register')
+    api.add_resource(Login, '/login')
+    api.add_resource(Logout, '/logout')
+    api.add_resource(Chat, '/chat')
+    api.add_resource(SentHistory, '/history/sent')
+    api.add_resource(ReceivedHistory, '/history/received')

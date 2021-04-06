@@ -34,5 +34,5 @@ def create_app(test):
     return app
 
 if __name__ == "__main__":
-    app = create_app(test=True)
+    app = create_app(test=False)
     app.run(debug=True)
