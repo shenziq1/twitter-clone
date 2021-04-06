@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, make_response
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from flask_restful import Resource
-from models import User, Message
+from models import User, Message, Tweet
 from db import db
 
 class Index(Resource):
@@ -17,7 +17,6 @@ class Users(Resource):
         return jsonify([{"username": user.username, "password_hash": user.password_hash, "id": user.id} for user in users])
 
 class Register(Resource):
-
     def get(self):
         if current_user.is_authenticated:
             return redirect('/')
@@ -97,20 +96,57 @@ class Chat(Resource):
         else:
             return {'error': 'Fields are required to be filled.'}, 400
 
-
 class SentHistory(Resource):
     @login_required
     def get(self):
         _from = current_user.get_username()
         messages = Message.query.filter_by(_from=_from)
-        return jsonify([{'_to': m.get_to(), 'message': m.get_content()} for m in messages])
+        return jsonify([{'_to': m._to, 'message': m.content} for m in messages])
 
 class ReceivedHistory(Resource):
     @login_required
     def get(self):
         _to = current_user.get_username()
         messages = Message.query.filter_by(_to=_to)
-        return jsonify([{'_from': m.get_from(), 'message': m.get_content()} for m in messages])
+        return jsonify([{'_from': m._from, 'message': m.content} for m in messages])
+
+class Tweets(Resource):
+    @login_required
+    def get(self):
+        tweets = Tweet.query.all()
+        username = current_user.get_username()
+        return jsonify([{"author": username, "tweet_id": t.id, "title": t.title, "content": t.content} for t in tweets])
+
+    @login_required
+    def post(self):
+        uid = current_user.get_id()
+        user = User.query.filter_by(id = uid).first()
+        title = request.form["title"]
+        content = request.form["content"]
+        tweet = Tweet(user, title, content)
+        db.session.add(tweet)
+        db.session.commit()
+        return {'success': 'Tweet has been posted!'}, 200
+
+    @login_required
+    def put(self):
+        uid = current_user.get_id()
+        user = User.query.filter_by(id = uid).first()
+        tweet_id = request.form["tweet_id"]
+        title = request.form["title"]
+        content = request.form["content"]
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        db.session.merge(tweet, {'title':title, 'content':content})
+        db.session.commit()
+        return {'success': 'Tweet has been updated!'}, 200
+
+    @login_required
+    def delete(self):
+        tweet_id = request.form["tweet_id"]
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        db.session.delete(tweet)
+        db.session.commit()
+        return {'success': 'Tweet has been deleted!'}, 200
 
 def initialize_routes(api):
     api.add_resource(Users, '/users')
@@ -121,3 +157,4 @@ def initialize_routes(api):
     api.add_resource(Chat, '/chat')
     api.add_resource(SentHistory, '/history/sent')
     api.add_resource(ReceivedHistory, '/history/received')
+    api.add_resource(Tweets, '/tweet')

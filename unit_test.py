@@ -214,3 +214,67 @@ class TestReceivedHistory:
         assert [{'_from': 'a', 'message': 'hello, b'}] == json.loads(response.get_data(as_text=True))
 
         client.get('/logout')
+
+################################################################################
+
+class TestTweet:
+    def test_successful_tweet(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
+        }
+        client.post('/login', data=login)
+
+        tweet = {
+            'title': 'this is title',
+            'content': 'this is content'
+        }
+        response = client.post('/tweet', data=tweet)
+        assert response.status_code == 200
+        assert {'success': 'Tweet has been posted!'} == json.loads(response.get_data(as_text=True))
+
+        client.get('/logout')
+
+    def test_view_tweet(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
+        }
+        client.post('/login', data=login)
+
+        response = client.get('/tweet')
+        assert response.status_code == 200
+        assert [{
+            "content": "this is content",
+            "tweet_id": 1,
+            "title": "this is title",
+            "author": "a"
+        }] == json.loads(response.get_data(as_text=True))
+
+    def test_update_tweet(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
+        }
+        client.post('/login', data=login)
+
+        new_tweet = {
+            'tweet_id':'1',
+            'title':'title',
+            'content':'content'
+        }
+
+        response = client.put('/tweet', data=new_tweet)
+        assert response.status_code == 200
+        assert {'success': 'Tweet has been updated!'} == json.loads(response.get_data(as_text=True))
+
+    def test_delete_tweet(app, client):
+        login = {
+            "username": "a",
+            "password": "1"
+        }
+        client.post('/login', data=login)
+
+        response = client.delete('/tweet', data={'tweet_id': '1'})
+        assert response.status_code == 200
+        assert {'success': 'Tweet has been deleted!'} == json.loads(response.get_data(as_text=True))
