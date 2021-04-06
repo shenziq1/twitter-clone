@@ -86,19 +86,27 @@ class Chat(Resource):
         _from = current_user.get_username()
         _to = request.form['_to']
         content = request.form['content']
-        channel = _from + '-' + _to
+        if (_to and content):
+            if User.query.filter_by(username=_to).first():
+                message = Message(_from=_from, _to=_to, content=content)
+                db.session.add(message)
+                db.session.commit()
+                return {'success': 'Message has been sent!'}, 200
+            else:
+                return {'error':'Cannot find user with username ' + _to}, 404
+        else:
+            return {'error': 'Fields are required to be filled.'}, 400
 
-        message = Message(_from=_from, _to=_to, content=content, channel=channel)
-        db.session.add(message)
-        db.session.commit()
 
-        return {'success': 'message has been sent!'}, 200
+
 
 class SentHistory(Resource):
     @login_required
     def get(self):
         _from = current_user.get_username()
         messages = Message.query.filter_by(_from=_from)
+        if message is None:
+            return {'alert':'You have not sent any message yet!'}, 204
         return jsonify([{'_to': m.get_to(), 'message': m.get_content()} for m in messages])
 
 class ReceivedHistory(Resource):
@@ -106,6 +114,8 @@ class ReceivedHistory(Resource):
     def get(self):
         _to = current_user.get_username()
         messages = Message.query.filter_by(_to=_to)
+        if message is None:
+            return {'alert':'You have not received any message yet!'}, 204
         return jsonify([{'_from': m.get_from(), 'message': m.get_content()} for m in messages])
 
 def initialize_routes(api):
