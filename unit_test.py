@@ -264,6 +264,7 @@ class TestTweet:
         assert [{
             'author': 'a',
             'content': 'this is content',
+            'like': 0,
             'title': 'this is title',
             'tweet_id': 1
         }] == json.loads(response.get_data(as_text=True))
@@ -286,6 +287,16 @@ class TestTweet:
         response = client.put('/tweet', data=new_tweet)
         assert response.status_code == 200
         assert {'success': 'Tweet has been updated!'} == json.loads(response.get_data(as_text=True))
+
+        response2 = client.get('/tweet')
+        assert response.status_code == 200
+        assert [{
+            'author': 'a',
+            'content': 'content',
+            'like': 0,
+            'title': 'title',
+            'tweet_id': 1
+        }] == json.loads(response2.get_data(as_text=True))
 
         client.get('/logout')
 
@@ -360,8 +371,62 @@ class TestTweet:
         }
         client.post('/login', data=login)
 
-        response = client.delete('/tweet', data={'tweet_id': '2'})
+        response = client.delete('/tweet', data={'tweet_id': '1'})
         assert response.status_code == 404
         assert {'error': 'Tweet Not Found'} == json.loads(response.get_data(as_text=True))
 
         client.get('/logout')
+
+class TestLike():
+    def test_successful_like(app, client):
+        login = {
+            'username': 'a',
+            'password': '1'
+        }
+        client.post('/login', data=login)
+
+        tweet = {
+            'title': 'this is title',
+            'content': 'this is content'
+        }
+        client.post('/tweet', data=tweet)
+
+        response = client.post('/like', data={'tweet_id': '1'})
+        assert response.status_code == 200
+        assert {'success': 'Liked the Tweet! Like count is now 1!'} == json.loads(response.get_data(as_text=True))
+
+        response2 = client.get('/tweet')
+        assert response.status_code == 200
+        assert [{
+            'author': 'a',
+            'content': 'this is content',
+            'like': 1,
+            'title': 'this is title',
+            'tweet_id': 1
+        }] == json.loads(response2.get_data(as_text=True))
+
+        client.get('logout')
+
+class TestUnlike():
+    def test_successful_like(app, client):
+        login = {
+            'username': 'a',
+            'password': '1'
+        }
+        client.post('/login', data=login)
+
+        response = client.post('/unlike', data={'tweet_id': '1'})
+        assert response.status_code == 200
+        assert {'success': 'Unliked the Tweet! Like count is now 0!'} == json.loads(response.get_data(as_text=True))
+
+        response2 = client.get('/tweet')
+        assert response.status_code == 200
+        assert [{
+            'author': 'a',
+            'content': 'this is content',
+            'like': 0,
+            'title': 'this is title',
+            'tweet_id': 1
+        }] == json.loads(response2.get_data(as_text=True))
+
+        client.get('logout')

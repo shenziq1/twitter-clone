@@ -115,7 +115,7 @@ class Tweets(Resource):
     def get(self):
         tweets = Tweet.query.all()
         username = current_user.get_username()
-        return jsonify([{"author": username, "tweet_id": t.id, "title": t.title, "content": t.content} for t in tweets])
+        return jsonify([{"author": username, "tweet_id": t.id, "title": t.title, "content": t.content, "like": t.like} for t in tweets])
 
     @login_required
     def post(self):
@@ -123,8 +123,9 @@ class Tweets(Resource):
         user = User.query.filter_by(id = uid).first()
         title = request.form["title"]
         content = request.form["content"]
+        like = 0
         if (title and content):
-            tweet = Tweet(user, title, content)
+            tweet = Tweet(user, title, content, like)
             db.session.add(tweet)
             db.session.commit()
             return {'success': 'Tweet has been posted!'}, 200
@@ -141,7 +142,8 @@ class Tweets(Resource):
         if (tweet_id and title and content):
             tweet = Tweet.query.filter_by(id = tweet_id).first()
             if tweet is not None:
-                db.session.merge(tweet, {'title':title, 'content':content})
+                tweet.title = title
+                tweet.content = content
                 db.session.commit()
                 return {'success': 'Tweet has been updated!'}, 200
             else:
@@ -163,6 +165,36 @@ class Tweets(Resource):
         else:
             return {'error': 'Fields are required to be filled.'}, 400
 
+class Like(Resource):
+    def post(self):
+        tweet_id = request.form["tweet_id"]
+        if tweet_id:
+            tweet = Tweet.query.filter_by(id = tweet_id).first()
+            if tweet is not None:
+                current_like = tweet.like+1
+                tweet.like = current_like
+                db.session.commit()
+                return {'success': 'Liked the Tweet! Like count is now '+ str(current_like) + '!'}, 200
+            else:
+                return {'error': 'Tweet Not Found'}, 404
+        else:
+            return {'error': 'Fields are required to be filled.'}, 400
+
+class Unlike(Resource):
+    def post(self):
+        tweet_id = request.form["tweet_id"]
+        if tweet_id:
+            tweet = Tweet.query.filter_by(id = tweet_id).first()
+            if tweet is not None:
+                current_like = tweet.like-1
+                tweet.like = current_like
+                db.session.commit()
+                return {'success': 'Unliked the Tweet! Like count is now '+ str(current_like) + '!'}, 200
+            else:
+                return {'error': 'Tweet Not Found'}, 404
+        else:
+            return {'error': 'Fields are required to be filled.'}, 400
+
 def initialize_routes(api):
     api.add_resource(Users, '/users')
     api.add_resource(Index, '/')
@@ -173,3 +205,5 @@ def initialize_routes(api):
     api.add_resource(SentHistory, '/history/sent')
     api.add_resource(ReceivedHistory, '/history/received')
     api.add_resource(Tweets, '/tweet')
+    api.add_resource(Like, '/like')
+    api.add_resource(Unlike, '/unlike')

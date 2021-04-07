@@ -44,8 +44,10 @@ class Tweet(db.Model):
     user = db.relationship('User', foreign_keys=uid)
     title = db.Column(db.String(64))
     content = db.Column(db.String(128))
+    like = db.Column(db.Integer)
 
-    def __init__(self, user, title, content):
+    def __init__(self, user, title, content, like):
         self.user = user
         self.title = title
         self.content = content
+        self.like = like
