@@ -7,14 +7,14 @@ from db import db
 class Index(Resource):
     def get(self):
         if current_user.is_authenticated:
-            return "Hello, " + current_user.get_username() + "!"
+            return 'Hello, ' + current_user.get_username() + '!'
         else:
-            return "Hello, please register or login!"
+            return 'Hello, please register or login!'
 
 class Users(Resource):
     def get(self):
         users = User.query.all()
-        return jsonify([{"username": user.username, "password_hash": user.password_hash, "id": user.id} for user in users])
+        return jsonify([{'username': user.username, 'password_hash': user.password_hash, 'id': user.id} for user in users])
 
 class Register(Resource):
     def get(self):
@@ -115,14 +115,14 @@ class Tweets(Resource):
     def get(self):
         tweets = Tweet.query.all()
         username = current_user.get_username()
-        return jsonify([{"author": username, "tweet_id": t.id, "title": t.title, "content": t.content, "like": t.like} for t in tweets])
+        return jsonify([{'author': username, 'tweet_id': t.id, 'title': t.title, 'content': t.content, 'like': t.like} for t in tweets])
 
     @login_required
     def post(self):
         uid = current_user.get_id()
         user = User.query.filter_by(id = uid).first()
-        title = request.form["title"]
-        content = request.form["content"]
+        title = request.form['title']
+        content = request.form['content']
         like = 0
         if (title and content):
             tweet = Tweet(user, title, content, like)
@@ -136,9 +136,9 @@ class Tweets(Resource):
     def put(self):
         uid = current_user.get_id()
         user = User.query.filter_by(id = uid).first()
-        tweet_id = request.form["tweet_id"]
-        title = request.form["title"]
-        content = request.form["content"]
+        tweet_id = request.form['tweet_id']
+        title = request.form['title']
+        content = request.form['content']
         if (tweet_id and title and content):
             tweet = Tweet.query.filter_by(id = tweet_id).first()
             if tweet is not None:
@@ -153,7 +153,7 @@ class Tweets(Resource):
 
     @login_required
     def delete(self):
-        tweet_id = request.form["tweet_id"]
+        tweet_id = request.form['tweet_id']
         if tweet_id:
             tweet = Tweet.query.filter_by(id = tweet_id).first()
             if tweet is not None:
@@ -167,7 +167,7 @@ class Tweets(Resource):
 
 class Like(Resource):
     def post(self):
-        tweet_id = request.form["tweet_id"]
+        tweet_id = request.form['tweet_id']
         if tweet_id:
             tweet = Tweet.query.filter_by(id = tweet_id).first()
             if tweet is not None:
@@ -182,7 +182,7 @@ class Like(Resource):
 
 class Unlike(Resource):
     def post(self):
-        tweet_id = request.form["tweet_id"]
+        tweet_id = request.form['tweet_id']
         if tweet_id:
             tweet = Tweet.query.filter_by(id = tweet_id).first()
             if tweet is not None:

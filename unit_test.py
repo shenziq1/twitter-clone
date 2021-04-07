@@ -161,6 +161,8 @@ class TestChat:
 
         client.get('/logout')
 
+################################################################################
+
 class TestSentHistory:
     def test_sent_history_a(app, client):
         login = {
@@ -187,6 +189,8 @@ class TestSentHistory:
         assert [] == json.loads(response.get_data(as_text=True))
 
         client.get('/logout')
+
+################################################################################
 
 class TestReceivedHistory:
     def test_received_empty_history_a(app, client):
@@ -377,6 +381,8 @@ class TestTweet:
 
         client.get('/logout')
 
+################################################################################
+
 class TestLike():
     def test_successful_like(app, client):
         login = {
@@ -406,6 +412,8 @@ class TestLike():
         }] == json.loads(response2.get_data(as_text=True))
 
         client.get('logout')
+
+################################################################################
 
 class TestUnlike():
     def test_successful_like(app, client):
