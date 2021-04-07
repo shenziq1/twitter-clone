@@ -8,7 +8,7 @@ from routes import initialize_routes
 def create_app(test):
     app = Flask(__name__)
 
-    # Setup database sqlite
+    # Configurate database sqlite
     if test:
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test_twitter_clone.db"
     else:
@@ -22,7 +22,7 @@ def create_app(test):
     def create_table():
         db.create_all()
 
-    # Set up login functionality using Flask-Login
+    # User session maintenance is managed by Flask-Login
     login = LoginManager(app)
     login.init_app(app)
     login.login_view = 'login'
@@ -38,5 +38,5 @@ def create_app(test):
     return app
 
 if __name__ == "__main__":
-    app = create_app(test=True)
+    app = create_app(test=False)
     app.run(debug=True)

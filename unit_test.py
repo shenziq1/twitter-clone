@@ -3,12 +3,15 @@ import json
 import os
 from app import create_app
 from db import db
+from werkzeug.security import check_password_hash
+
 
 @pytest.fixture(scope='session')
 def app():
     app = create_app(test=True)
     yield app
 
+    # Delete test database after unit tests.
     os.unlink('test_twitter_clone.db')
 
 @pytest.fixture(scope='session')
@@ -63,6 +66,13 @@ class TestRegistration:
         response = client.post('/register', data=payload)
         assert response.status_code == 409
         assert {'error': 'User exists, try another username!'} == json.loads(response.get_data(as_text=True))
+
+    def test_users(app, client):
+        response = client.get('/users')
+        assert response.status_code == 200
+        # Get password_hash in response, then check if it is the same as hashing input password again.
+        assert check_password_hash(json.loads(response.get_data(as_text=True))[0]['password_hash'], 'testpassword') == True
+
 
 ################################################################################
 
