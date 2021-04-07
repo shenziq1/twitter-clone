@@ -5,7 +5,7 @@ from app import create_app
 from db import db
 from werkzeug.security import check_password_hash
 
-
+# Create a test app
 @pytest.fixture(scope='session')
 def app():
     app = create_app(test=True)
@@ -14,6 +14,7 @@ def app():
     # Delete test database after unit tests.
     os.unlink('test_twitter_clone.db')
 
+# To make requests to the app.
 @pytest.fixture(scope='session')
 def client(app):
     return app.test_client()

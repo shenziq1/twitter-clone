@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import db
 
+# To take advantage of flask_login, we inherit from UserMixin.
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
@@ -11,9 +12,6 @@ class User(db.Model, UserMixin):
 
     def __init__(self, username, password):
         self.username = username
-        self.password_hash = generate_password_hash(password)
-
-    def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
@@ -41,6 +39,7 @@ class Tweet(db.Model):
     __tablename__ = 'tweet'
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.Integer, db.ForeignKey("user.id"))
+    # Connect a relationship with User model.
     user = db.relationship('User', foreign_keys=uid)
     title = db.Column(db.String(64))
     content = db.Column(db.String(128))
