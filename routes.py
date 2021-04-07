@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, make_response
-from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_restful import Resource
 from models import User, Message, Tweet
 from db import db
@@ -123,10 +123,13 @@ class Tweets(Resource):
         user = User.query.filter_by(id = uid).first()
         title = request.form["title"]
         content = request.form["content"]
-        tweet = Tweet(user, title, content)
-        db.session.add(tweet)
-        db.session.commit()
-        return {'success': 'Tweet has been posted!'}, 200
+        if (title and content):
+            tweet = Tweet(user, title, content)
+            db.session.add(tweet)
+            db.session.commit()
+            return {'success': 'Tweet has been posted!'}, 200
+        else:
+            return {'error': 'Fields are required to be filled.'}, 400
 
     @login_required
     def put(self):
@@ -135,18 +138,30 @@ class Tweets(Resource):
         tweet_id = request.form["tweet_id"]
         title = request.form["title"]
         content = request.form["content"]
-        tweet = Tweet.query.filter_by(id = tweet_id).first()
-        db.session.merge(tweet, {'title':title, 'content':content})
-        db.session.commit()
-        return {'success': 'Tweet has been updated!'}, 200
+        if (tweet_id and title and content):
+            tweet = Tweet.query.filter_by(id = tweet_id).first()
+            if tweet is not None:
+                db.session.merge(tweet, {'title':title, 'content':content})
+                db.session.commit()
+                return {'success': 'Tweet has been updated!'}, 200
+            else:
+                return {'error': 'Tweet Not Found.'}, 404
+        else:
+            return {'error': 'Fields are required to be filled.'}, 400
 
     @login_required
     def delete(self):
         tweet_id = request.form["tweet_id"]
-        tweet = Tweet.query.filter_by(id = tweet_id).first()
-        db.session.delete(tweet)
-        db.session.commit()
-        return {'success': 'Tweet has been deleted!'}, 200
+        if tweet_id:
+            tweet = Tweet.query.filter_by(id = tweet_id).first()
+            if tweet is not None:
+                db.session.delete(tweet)
+                db.session.commit()
+                return {'success': 'Tweet has been deleted!'}, 200
+            else:
+                return {'error': 'Tweet Not Found'}, 404
+        else:
+            return {'error': 'Fields are required to be filled.'}, 400
 
 def initialize_routes(api):
     api.add_resource(Users, '/users')
