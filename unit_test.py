@@ -14,7 +14,7 @@ def app():
     # Delete test database after unit tests.
     os.unlink('test_twitter_clone.db')
 
-# To make requests to the app.
+# Make requests to the app.
 @pytest.fixture(scope='session')
 def client(app):
     return app.test_client()
